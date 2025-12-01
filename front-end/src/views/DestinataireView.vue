@@ -8,11 +8,26 @@
       <p class="mt-2 text-muted">Chargement de vos numéros...</p>
     </div>
 
+    <!-- NOTIFICATION FIXE À DROITE -->
+    <div v-if="apiMessage" class="fixed-notification">
+      <div class="notification-content">
+        <div class="notification-header">
+          <span class="notification-title"></span>
+          <button class="notification-close" @click="apiMessage = ''">
+            &times;
+          </button>
+        </div>
+        <div class="notification-body">
+          {{ apiMessage }}
+        </div>
+      </div>
+    </div>
+
     <!-- CARD -->
-    <div v-else class="card">
+    <div v-else class="card shadow">
       <div class="card-header d-flex justify-content-between align-items-center">
         <div class="card-title mb-0">Numéros Enregistrés</div>
-         <button 
+        <button 
           class="btn btn-primary btn-sm"
           style="width: 100px"
           @click="showAddModal = true"
@@ -69,12 +84,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import numeroDestinataireService from '../services/numeroDestinataireService'
-import AddNumeroModal from '../components/Numero.vue' // Chemin à ajuster
+import AddNumeroModal from '../components/Numero.vue'
 import type { NumeroDestinataire } from '../types/NumeroDestinataire'
+import '../assets/css/numero-form.css'
 
 const loading = ref(true)
 const numeros = ref<NumeroDestinataire[]>([])
 const showAddModal = ref(false)
+const apiMessage = ref('')
+let timeoutId:number | null = null
 
 const fetchData = async () => {
   try {
@@ -87,13 +105,19 @@ const fetchData = async () => {
   }
 }
 
-// 🔹 Gérer l'ajout depuis le modal et afficher le message
 const handleNumeroAdded = (newNumero: NumeroDestinataire) => {
-  numeros.value.push(newNumero) // Ajouter le nouveau numéro à la liste
- 
-  // Supprimer le message après quelques secondes
- }
+  numeros.value.push(newNumero)
 
+  apiMessage.value = newNumero.message || "added"
+  
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+  }
+
+  timeoutId = setTimeout(() =>{
+    apiMessage.value = ''
+  },3000)
+}
 
 function formatDate(date: string) {
   return new Date(date).toLocaleString()
@@ -102,28 +126,3 @@ function formatDate(date: string) {
 onMounted(fetchData)
 </script>
 
-<style scoped>
-.card {
-  border: 1px solid #dee2e6;
-  box-shadow: none;
-}
-
-.card-header {
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.card-title {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.table th {
-  background: #f8f9fa;
-}
-
-.tiny-btn {
-  font-size: 0.75rem;
-  padding: 0.3rem 0.6rem;
-}
-</style>

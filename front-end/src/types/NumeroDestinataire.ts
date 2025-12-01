@@ -3,4 +3,5 @@ export interface NumeroDestinataire {
   valeur: string;
   dateCreation: string;
   plateformes: string[];
+  message: string;
 }

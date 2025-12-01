@@ -8,8 +8,23 @@
       <p class="mt-2 text-muted">Chargement de vos numéros...</p>
     </div>
 
+    <!-- NOTIFICATION FIXE À DROITE -->
+    <div v-if="apiMessage" class="fixed-notification">
+      <div class="notification-content">
+        <div class="notification-header">
+          <span class="notification-title"></span>
+          <button class="notification-close" @click="apiMessage = ''">
+            &times;
+          </button>
+        </div>
+        <div class="notification-body">
+          {{ apiMessage }}
+        </div>
+      </div>
+    </div>
+
     <!-- CARD -->
-    <div v-else class="card">
+    <div v-else class="card shadow">
       <div class="card-header d-flex justify-content-between align-items-center">
         <div class="card-title mb-0">Numéros Enregistrés</div>
         <button 
@@ -22,11 +37,6 @@
       </div>
 
       <div class="card-body">
-        <!-- MESSAGE API -->
-        <div v-if="apiMessage" class="alert alert-success text-center">
-          {{ apiMessage }}
-        </div>
-
         <!-- AUCUN NUMÉRO -->
         <div v-if="numeros.length === 0" class="text-center py-4">
           <div class="text-muted mb-3">📱</div>
@@ -77,13 +87,14 @@
 import { ref, onMounted } from 'vue'
 import NumeroExpediteurService from '../services/numeroExpediteurService'
 import type { NumeroExpediteur } from '../types/NumeroExpediteur'
-import AddNumeroModal from '../components/Numero.vue' // Chemin à ajuster
+import AddNumeroModal from '../components/Numero.vue'
 import '../assets/css/numero-form.css'
 
 const loading = ref(true)
 const numeros = ref<NumeroExpediteur[]>([])
 const showAddModal = ref(false)
 const apiMessage = ref('') // 🔹 message à afficher après ajout
+let timeoutId: number | null = null
 
 const fetchData = async () => {
   try {
@@ -98,18 +109,34 @@ const fetchData = async () => {
 
 // 🔹 Gérer l'ajout depuis le modal et afficher le message
 const handleNumeroAdded = (newNumero: NumeroExpediteur) => {
-  numeros.value.push(newNumero) // Ajouter le nouveau numéro à la liste
-  apiMessage.value = newNumero.message // Afficher le message renvoyé par l'API
+  // Ajouter le nouveau numéro à la liste
+  numeros.value.push(newNumero)
+  
+  // Afficher le message renvoyé par l'API ou un message par défaut
+  apiMessage.value = newNumero.message || 'Numéro ajouté avec succès !'
 
+  // Annuler le précédent timeout si existe
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+  }
+  
   // Supprimer le message après quelques secondes
-  setTimeout(() => {
+  timeoutId = setTimeout(() => {
     apiMessage.value = ''
-  }, 4000)
+  }, 3000)
 }
 
 function formatDate(date: string) {
   return new Date(date).toLocaleString()
 }
+
+// Nettoyer le timeout quand le composant est détruit
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+  }
+})
 
 onMounted(fetchData)
 </script>

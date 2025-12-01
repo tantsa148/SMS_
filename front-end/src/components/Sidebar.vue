@@ -23,9 +23,9 @@
     <ul class="nav flex-column">
       <li class="nav-item">
         <RouterLink
-          to="/message"
+          to="/formulairemessage"
           class="nav-link"
-          :class="{ active: route.path === '/message' }"
+          :class="{ active: route.path === '/formulairemessage' }"
         >
           <i class="fas fa-envelope"></i>
         Envoyer message
@@ -69,11 +69,25 @@
           class="nav-link"
           :class="{ active: route.path === '/destinataire' }"
         >
-          <i class="fa fa-history"></i>
+          <i class="fas fa-user-friends"></i>
         Numero utilisateur 
         </RouterLink>
       </li>
     </ul>
+
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <RouterLink
+          to="/messageTexte"
+          class="nav-link"
+          :class="{ active: route.path === '/messageTexte' }"
+        >
+          <i class="fas fa-user-friends"></i>
+        Message enregistre 
+        </RouterLink>
+      </li>
+    </ul>
+
 
     <!-- Bouton Déconnexion -->
     <ul class="nav flex-column mt-auto">

@@ -1,15 +1,6 @@
 import api from './api'
 import type { NumeroDestinataire } from '../types/NumeroDestinataire'
 
-// Typage pour la réponse de la méthode POST
-interface AddNumeroResponse {
-  id: number
-  valeur: string
-  dateCreation: string
-  nomPlateforme: string
-  message: string
-}
-
 export default {
   // Récupérer tous les numéros
   getAll(): Promise<{ data: NumeroDestinataire[] }> {
@@ -17,7 +8,8 @@ export default {
   },
 
   // Ajouter un nouveau numéro avec une plateforme
-  addNumero(data: { valeur: string; plateformeId: number }): Promise<AddNumeroResponse> {
+  addNumero(data: { valeur: string; plateformeId: number }): Promise<NumeroDestinataire> {
     return api.post('/api/numero-destinataire', data)
+    .then(res=> res.data)
   }
 }

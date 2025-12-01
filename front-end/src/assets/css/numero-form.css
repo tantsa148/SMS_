@@ -253,3 +253,130 @@
   from { opacity: 0; transform: scale(0.8) translateY(30px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
+/* Style pour la toast notification */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1055;
+  min-width: 300px;
+}
+
+.toast {
+  background-color: #d1e7dd;
+  border-color: #badbcc;
+  color: #0f5132;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-header {
+  background-color: rgba(209, 231, 221, 0.85);
+  border-bottom-color: #badbcc;
+}
+/* Notification fixe à droite */
+.fixed-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1055;
+  min-width: 300px;
+  max-width: 400px;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.notification-content {
+  background: #b9b9b9;
+  border: 1px solid #badbcc;
+  border-radius: 8px;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: rgba(209, 231, 221, 0.9);
+  border-bottom: 1px solid #badbcc;
+}
+
+.notification-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: #0f5132;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.notification-close:hover {
+  opacity: 1;
+}
+
+.notification-body {
+  padding: 15px;
+  font-size: 0.95rem;
+}
+
+/* Animation d'entrée */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Animation de sortie (optionnel) */
+.fixed-notification.leaving {
+  animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Style pour la carte reste inchangé */
+.card {
+  border: 1px solid #dee2e6;
+  box-shadow: none;
+}
+
+.card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.table th {
+  background: #f8f9fa;
+}
