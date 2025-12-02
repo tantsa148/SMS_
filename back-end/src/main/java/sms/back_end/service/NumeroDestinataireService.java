@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import sms.back_end.dto.NumeroDestinataireRequest;
@@ -17,6 +19,8 @@ import sms.back_end.repository.NumeroDestinataireRepository;
 @Service
 public class NumeroDestinataireService {
 
+    private static final Logger logger = LoggerFactory.getLogger(NumeroDestinataireService.class);
+    
     private final NumeroDestinataireRepository repository;
     private final DisponibleSurService disponibleSurService;
     private final PlateformeService plateformeService;
@@ -28,150 +32,235 @@ public class NumeroDestinataireService {
     this.repository = repository;
     this.disponibleSurService = disponibleSurService;
     this.plateformeService = plateformeService;
+    logger.info("NumeroDestinataireService initialisé avec repository: {}, disponibleSurService: {}, plateformeService: {}",
+        repository != null, disponibleSurService != null, plateformeService != null);
 }
 
     // ============================
     // CREATE
     // ============================
     public NumeroDestinataireResponse createNumero(NumeroDestinataireRequest request) {
+        logger.info("⏩ DEBUT createNumero() - Numéro: {}, PlateformeId: {}", 
+            request.getValeur(), request.getPlateformeId());
+        
+        try {
+            Optional<NumeroDestinataire> existant = repository.findByValeurNumero(request.getValeur());
+            logger.debug("Recherche du numéro existant: {}", request.getValeur());
+            
+            NumeroDestinataire numero;
 
-    Optional<NumeroDestinataire> existant = repository.findByValeurNumero(request.getValeur());
+            // CAS 1 : Le numéro existe déjà
+            if (existant.isPresent()) {
+                logger.info("📞 Numéro existant trouvé: {}", request.getValeur());
+                numero = existant.get();
 
-    NumeroDestinataire numero;
+                // Si une plateforme est fournie
+                if (request.getPlateformeId() != null) {
+                    logger.debug("Vérification de la plateforme ID: {}", request.getPlateformeId());
+                    
+                    plateformeService.getPlateformeOrThrow(request.getPlateformeId());
 
-    // ------------------------------------
-    // CAS 1 : Le numéro existe déjà
-    // ------------------------------------
-    if (existant.isPresent()) {
+                    boolean dejaAssocie = disponibleSurService.existeAssociation(
+                        numero.getIdNumero(), request.getPlateformeId()
+                    );
+                    logger.debug("Association existante: {}", dejaAssocie);
 
-        numero = existant.get();
+                    if (!dejaAssocie) {
+                        disponibleSurService.addDisponible(numero.getIdNumero(), request.getPlateformeId());
+                        NumeroDestinataireResponse response = buildResponseDTO(numero);
+                        response.setMessage("Plateforme ajoutée avec succès au numéro.");
+                        logger.info("✅ Plateforme {} ajoutée au numéro {}", 
+                            request.getPlateformeId(), request.getValeur());
+                        return response;
+                    }
 
-        // Si une plateforme est fournie
-        if (request.getPlateformeId() != null) {
+                    // Déjà associé
+                    NumeroDestinataireResponse response = buildResponseDTO(numero);
+                    response.setMessage("Le numéro est déjà sur cette plateforme.");
+                    logger.info("ℹ️ Numéro déjà associé à la plateforme");
+                    return response;
+                }
 
-    // Vérifie si la plateforme existe
-    plateformeService.getPlateformeOrThrow(request.getPlateformeId());
+                // Aucun changement (pas de plateforme fournie)
+                NumeroDestinataireResponse response = buildResponseDTO(numero);
+                response.setMessage("Le numéro existe déjà.");
+                logger.info("ℹ️ Numéro existe déjà, pas de plateforme à ajouter");
+                return response;
+            }
 
-    boolean dejaAssocie = disponibleSurService.existeAssociation(
-            numero.getIdNumero(), request.getPlateformeId()
-    );
+            // CAS 2 : Le numéro n'existe pas → créer
+            logger.info("🆕 Création d'un nouveau numéro: {}", request.getValeur());
+            numero = new NumeroDestinataire();
+            numero.setValeurNumero(request.getValeur());
 
-    if (!dejaAssocie) {
-        disponibleSurService.addDisponible(numero.getIdNumero(), request.getPlateformeId());
-        NumeroDestinataireResponse response = buildResponseDTO(numero);
-        response.setMessage("Plateforme ajoutée avec succès au numéro.");
-        return response;
+            NumeroDestinataire saved = repository.save(numero);
+            logger.info("💾 Numéro sauvegardé avec ID: {}", saved.getIdNumero());
+
+            if (request.getPlateformeId() != null) {
+                logger.debug("Ajout de la plateforme ID: {} au nouveau numéro", request.getPlateformeId());
+                disponibleSurService.addDisponible(saved.getIdNumero(), request.getPlateformeId());
+            }
+
+            NumeroDestinataireResponse response = buildResponseDTO(saved);
+            response.setMessage("Numéro ajouté avec succès !");
+            logger.info("✅ Création réussie pour le numéro: {}", request.getValeur());
+            return response;
+            
+        } catch (Exception e) {
+            logger.error("❌ ERREUR dans createNumero() pour le numéro {}: {}", 
+                request.getValeur(), e.getMessage(), e);
+            throw e; // Relancer l'exception pour la gestion globale
+        }
     }
-
-    // Déjà associé
-    NumeroDestinataireResponse response = buildResponseDTO(numero);
-    response.setMessage("Le numéro est déjà sur cette plateforme.");
-    return response;
-}
-
-
-        // Aucun changement (pas de plateforme fournie)
-        NumeroDestinataireResponse response = buildResponseDTO(numero);
-        response.setMessage("Le numéro existe déjà.");
-        return response;
-    }
-
-    // ------------------------------------
-    // CAS 2 : Le numéro n'existe pas → créer
-    // ------------------------------------
-    numero = new NumeroDestinataire();
-    numero.setValeurNumero(request.getValeur());
-
-    NumeroDestinataire saved = repository.save(numero);
-
-    if (request.getPlateformeId() != null) {
-        disponibleSurService.addDisponible(saved.getIdNumero(), request.getPlateformeId());
-    }
-
-    NumeroDestinataireResponse response = buildResponseDTO(saved);
-    response.setMessage("Numéro ajoutee avec succès !");
-    return response;
-}
 
     // ============================
     // READ ALL
     // ============================
     public List<NumeroDestinataireResponse> getAllNumeros() {
-        return repository.findAll()
-                .stream()
-                .map(this::buildResponseDTO)
-                .collect(Collectors.toList());
+        logger.debug("⏩ DEBUT getAllNumeros()");
+        try {
+            List<NumeroDestinataireResponse> result = repository.findAll()
+                    .stream()
+                    .map(this::buildResponseDTO)
+                    .collect(Collectors.toList());
+            logger.info("📋 getAllNumeros() retourne {} numéros", result.size());
+            return result;
+        } catch (Exception e) {
+            logger.error("❌ ERREUR dans getAllNumeros(): {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     // ============================
     // READ BY ID
     // ============================
     public NumeroDestinataireResponse getNumeroById(Long id) {
-    NumeroDestinataire numero = repository.findById(id)
-            .orElseThrow(() ->
-                    new NotFoundException("Le numéro destinataire avec l'ID " + id + " est introuvable"));
-
-    return buildResponseDTO(numero);
-}
+        logger.debug("⏩ DEBUT getNumeroById() - ID: {}", id);
+        try {
+            NumeroDestinataire numero = repository.findById(id)
+                    .orElseThrow(() -> {
+                        logger.warn("⚠️ Numéro non trouvé avec ID: {}", id);
+                        return new NotFoundException("Le numéro destinataire avec l'ID " + id + " est introuvable");
+                    });
+            
+            logger.info("✅ Numéro trouvé: ID={}, Valeur={}", id, numero.getValeurNumero());
+            return buildResponseDTO(numero);
+        } catch (Exception e) {
+            logger.error("❌ ERREUR dans getNumeroById({}): {}", id, e.getMessage(), e);
+            throw e;
+        }
+    }
 
     // ============================
     // UPDATE
     // ============================
     public NumeroDestinataire updateNumero(Long id, NumeroDestinataire updatedNumero) {
+        logger.info("⏩ DEBUT updateNumero() - ID: {}, Nouvelle valeur: {}", 
+            id, updatedNumero.getValeurNumero());
+        
+        try {
+            // Vérifie si changement en doublon
+            Optional<NumeroDestinataire> existant = repository.findByValeurNumero(
+                    updatedNumero.getValeurNumero()
+            );
+            
+            if (existant.isPresent() && !existant.get().getIdNumero().equals(id)) {
+                logger.warn("⚠️ Tentative de duplication - Numéro {} existe déjà pour ID: {}", 
+                    updatedNumero.getValeurNumero(), existant.get().getIdNumero());
+                throw new BadRequestException("Ce numéro existe déjà !");
+            }
 
-        // Vérifie si changement en doublon
-        Optional<NumeroDestinataire> existant = repository.findByValeurNumero(
-                updatedNumero.getValeurNumero()
-        );
-        if (existant.isPresent() && !existant.get().getIdNumero().equals(id)) {
-            throw new BadRequestException("Ce numéro existe déjà !");
+            return repository.findById(id)
+                    .map(numero -> {
+                        String ancienneValeur = numero.getValeurNumero();
+                        numero.setValeurNumero(updatedNumero.getValeurNumero());
+                        NumeroDestinataire saved = repository.save(numero);
+                        logger.info("✅ Numéro mis à jour - ID: {}, {} → {}", 
+                            id, ancienneValeur, updatedNumero.getValeurNumero());
+                        return saved;
+                    })
+                    .orElseThrow(() -> {
+                        logger.warn("⚠️ Numéro non trouvé pour update - ID: {}", id);
+                        return new NotFoundException("Numéro destinataire ID=" + id + " non trouvé");
+                    });
+        } catch (Exception e) {
+            logger.error("❌ ERREUR dans updateNumero({}): {}", id, e.getMessage(), e);
+            throw e;
         }
-
-        return repository.findById(id)
-                .map(numero -> {
-                    numero.setValeurNumero(updatedNumero.getValeurNumero());
-                    return repository.save(numero);
-                })
-                .orElseThrow(() ->
-                        new NotFoundException("Numéro destinataire ID=" + id + " non trouvé"));
     }
 
     // ============================
     // DELETE
     // ============================
     public void deleteNumero(Long id) {
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("Impossible de supprimer : numéro ID=" + id + " introuvable");
+        logger.info("⏩ DEBUT deleteNumero() - ID: {}", id);
+        try {
+            if (!repository.existsById(id)) {
+                logger.warn("⚠️ Tentative de suppression d'un numéro inexistant - ID: {}", id);
+                throw new NotFoundException("Impossible de supprimer : numéro ID=" + id + " introuvable");
+            }
+            
+            repository.deleteById(id);
+            logger.info("🗑️ Numéro supprimé avec succès - ID: {}", id);
+        } catch (Exception e) {
+            logger.error("❌ ERREUR dans deleteNumero({}): {}", id, e.getMessage(), e);
+            throw e;
         }
-        repository.deleteById(id);
     }
 
     // ============================
     // UTILITAIRE DTO
     // ============================
-private NumeroDestinataireResponse buildResponseDTO(NumeroDestinataire numero) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private NumeroDestinataireResponse buildResponseDTO(NumeroDestinataire numero) {
+        logger.debug("⏩ DEBUT buildResponseDTO() pour ID: {}", numero.getIdNumero());
+        
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    NumeroDestinataireResponse dto = new NumeroDestinataireResponse();
-    dto.setId(numero.getIdNumero());
-    dto.setValeur(numero.getValeurNumero());
-    dto.setDateCreation(numero.getDateCreation().format(formatter));
+            NumeroDestinataireResponse dto = new NumeroDestinataireResponse();
+            dto.setId(numero.getIdNumero());
+            dto.setValeur(numero.getValeurNumero());
+            
+            if (numero.getDateCreation() != null) {
+                dto.setDateCreation(numero.getDateCreation().format(formatter));
+            } else {
+                dto.setDateCreation("Non définie");
+                logger.warn("⚠️ Date de création nulle pour le numéro ID: {}", numero.getIdNumero());
+            }
 
-    // ✅ Récupérer toutes les plateformes associées sous forme de liste
-    List<String> nomsPlateformes = disponibleSurService.getListeNomsPlateformesByNumeroId(numero.getIdNumero());
-    dto.setPlateformes(nomsPlateformes);
-
-    return dto;
-}
+            // Récupérer toutes les plateformes associées
+            List<String> nomsPlateformes = disponibleSurService.getListeNomsPlateformesByNumeroId(numero.getIdNumero());
+            dto.setPlateformes(nomsPlateformes);
+            
+            logger.debug("✅ DTO construit pour ID: {} - Plateformes: {}", 
+                numero.getIdNumero(), nomsPlateformes.size());
+            
+            return dto;
+        } catch (Exception e) {
+            logger.error("❌ ERREUR dans buildResponseDTO({}): {}", numero.getIdNumero(), e.getMessage(), e);
+            throw e;
+        }
+    }
 
     // ============================
     // GET valeur du numéro
     // ============================
     public String getValeurNumeroById(Long id) {
-        NumeroDestinataire destinataire = repository.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("Destinataire avec ID=" + id + " non trouvé"));
+        logger.debug("⏩ DEBUT getValeurNumeroById() - ID: {}", id);
+        try {
+            NumeroDestinataire destinataire = repository.findById(id)
+                    .orElseThrow(() -> {
+                        logger.warn("⚠️ Destinataire non trouvé pour getValeurNumeroById() - ID: {}", id);
+                        return new NotFoundException("Destinataire avec ID=" + id + " non trouvé");
+                    });
 
-        return destinataire.getValeurNumero();
+            String valeur = destinataire.getValeurNumero();
+            logger.debug("✅ getValeurNumeroById() retourne: {} pour ID: {}", valeur, id);
+            return valeur;
+        } catch (Exception e) {
+            logger.error("❌ ERREUR dans getValeurNumeroById({}): {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
+
 }

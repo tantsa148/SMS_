@@ -6,9 +6,6 @@ public class SmsRequest {
     private String destinataire;
     private String message;
     
-    
-    
-
     // getters et setters
     public Long getExpediteurId() { return expediteurId; }
     public void setExpediteurId(Long expediteurId) { this.expediteurId = expediteurId; }
