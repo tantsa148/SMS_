@@ -9,9 +9,9 @@
     <ul class="nav flex-column mb-4">
       <li class="nav-item">
         <RouterLink
-          to="/dashboard"
+          to="/acceuil"
           class="nav-link"
-          :class="{ active: route.path === '/dashboard' }"
+          :class="{ active: route.path === '/acceuil' }"
         >
           <i class="fas fa-home"></i>
           Dashboard

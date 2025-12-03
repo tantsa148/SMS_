@@ -37,7 +37,7 @@
           <table class="table table-hover">
             <thead>
               <tr>
-                <th>#</th>
+                <th></th>
                 <th>Destinataire</th>
                 <th>Status</th>
                 <th>Twilio Error Code</th>

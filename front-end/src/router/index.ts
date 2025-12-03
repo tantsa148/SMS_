@@ -6,14 +6,15 @@ import Expediteur from '../views/Expediteur.vue'
 import FormulaireMessage from '../views/FormulaireMessage.vue'
 import MessageTexte from '../views/MessageTexte.vue'
 import historiqueView from '../views/historiqueView.vue'
-
+import DashboardView from '../views/DashboardView.vue'
 const routes = [
   { path: '/', name: 'Login', component: LoginView },
-  {path:'/destinataire',component:DestinataireView},
-  {path:'/expediteur',component:Expediteur},
-  {path:'/formulaireMessage',component:FormulaireMessage},
-  {path:'/messageTexte',component:MessageTexte},
-  {path:'/historique',component:historiqueView}
+  { path: '/acceuil', name: 'acceuil', component: DashboardView },  
+  {path:'/destinataire', name: 'Destinataire',component:DestinataireView},
+  {path:'/expediteur', name: 'Expediteur',component:Expediteur},
+  {path:'/formulaireMessage',name: 'Envoyer un message',component:FormulaireMessage},
+  {path:'/messageTexte',name: 'Liste Message',component:MessageTexte},
+  {path:'/historique',name: 'Historique',component:historiqueView}
 ]
 
 const router = createRouter({

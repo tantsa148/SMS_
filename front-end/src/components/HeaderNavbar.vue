@@ -5,11 +5,15 @@
       <!-- Logo ou autre élément à gauche -->
       <div class="navbar-brand">
         <!-- Votre logo ici -->
+         <div class="navbar-brand">
+  <h2>{{ pageTitle }}</h2>
+</div>
+
       </div>
 
       <!-- Groupe solde + utilisateur -->
-      <div class="user-balance-group d-flex align-items-center gap-3">
-        <!-- Solde Twilio -->
+ <div class="user-balance-group d-flex align-items-center gap-3">
+          <!-- Solde Twilio -->
         <div class="twilio-balance-wrapper" v-if="balance">
           <div class="twilio-balance d-flex align-items-center gap-2">
             <i class="fa fa-wallet balance-icon"></i>
@@ -67,18 +71,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router'; // <-- pour récupérer la route
 import { getCurrentUser } from '../services/userService';
 import TwilioService from '../services/balanceService';
-import type { TwilioBalance } from '../services/balanceService'; // <-- type-only import
+import type { TwilioBalance } from '../services/balanceService';
 import type { UserDTO } from '../types/user';
 import '../assets/css/NavbarHeader.css';
 
 const showUserMenu = ref(false);
 const currentUser = ref<UserDTO | null>(null);
-
-// Twilio balance
 const balance = ref<TwilioBalance | null>(null);
+const route = useRoute();
+const pageTitle = ref<string>('');
+
+// Optionnel : fonction pour formater le nom
+function formatPageName(name: string) {
+  return name.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+}
+
+// Définir le titre au montage
+onMounted(async () => {
+  currentUser.value = await getCurrentUser();
+
+  try {
+    balance.value = await TwilioService.getBalance();
+  } catch (error) {
+    console.error('Erreur récupération solde Twilio', error);
+  }
+
+  pageTitle.value = route.name ? formatPageName(String(route.name)) : 'Accueil';
+});
+
+// Mettre à jour le titre si la route change
+watch(() => route.name, (newName) => {
+  pageTitle.value = newName ? formatPageName(String(newName)) : 'Accueil';
+});
 
 function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value;
@@ -90,18 +118,6 @@ function logout() {
   localStorage.removeItem('token');
   window.location.reload();
 }
-
-// Récupération utilisateur connecté
-onMounted(async () => {
-  currentUser.value = await getCurrentUser();
-
-  // Récupérer le solde Twilio
-  try {
-    balance.value = await TwilioService.getBalance();
-  } catch (error) {
-    console.error('Erreur récupération solde Twilio', error);
-  }
-});
 
 // Fermer le menu si clic à l'extérieur
 document.addEventListener('click', (e) => {
