@@ -70,14 +70,14 @@
   align-items: center;
   justify-content: center;
   font-size: 28px; /* icône plus grande */
-  background-color: #eff6ff;
-  color: #2563eb;
+  background-color: #2b5388;
+  color: #ffffff;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
   transition: all 0.2s ease;
 }
 
 .icon-square:hover {
-  background-color: #dbeafe;
+  background-color: #598dd1;
   transform: translateY(-2px);
 }
 
