@@ -89,11 +89,17 @@
     </ul>
 
 
-    <!-- Bouton Déconnexion -->
+ <!-- Bouton Déconnexion -->
     <ul class="nav flex-column mt-auto">
       <li class="nav-item">
-        <button class="btn btn-danger w-100" @click="handleLogout">
-          Déconnexion
+        <button 
+          class="btn btn-danger w-100" 
+          @click="handleLogout"
+          :disabled="loading"
+        >
+          <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+          <i v-else class="bi bi-box-arrow-right me-2"></i>
+          {{ loading ? 'Déconnexion...' : 'Déconnexion' }}
         </button>
       </li>
     </ul>
@@ -101,17 +107,42 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
+import { logout } from '../services/authService'
 import '../assets/css/sidebar.css'
-
-
 
 const router = useRouter()
 const route = useRoute()
+const loading = ref(false)
 
-
-const handleLogout = () => {
-  localStorage.removeItem('jwtToken')
-  router.push('/')
+const handleLogout = async () => {
+  if (loading.value) return
+  
+  loading.value = true
+  
+  try {
+    // Appeler le service de déconnexion
+    const response = await logout()
+    console.log('Déconnexion réussie:', response)
+    
+    // Redirection vers la page de login
+    router.push('/')
+    
+  } catch (error: any) {
+    console.error('Erreur lors de la déconnexion:', error)
+    
+    // Même en cas d'erreur, on nettoie le token local
+    localStorage.removeItem('token')
+    
+    // Afficher un message à l'utilisateur si besoin
+    alert('Déconnexion complétée (avec certaines erreurs techniques)')
+    
+    // Redirection quand même
+    router.push('/')
+    
+  } finally {
+    loading.value = false
+  }
 }
 </script>

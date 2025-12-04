@@ -38,7 +38,7 @@ const handleLogin = async (): Promise<void> => {
 
   try {
     await authStore.login({ username: username.value, password: password.value })
-    router.push('/dashboard') // redirection après connexion réussie
+    router.push('/acceuil') // redirection après connexion réussie
   } catch (err: any) {
     if (err.response && err.response.data) {
       // Le backend renvoie une chaîne simple ou un objet message

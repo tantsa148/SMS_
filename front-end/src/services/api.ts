@@ -1,21 +1,41 @@
 import axios from 'axios'
-import { useAuthStore } from '../store/auth'
 
 // Création d'une instance axios personnalisée
 const api = axios.create({
   baseURL: 'http://localhost:8080',
+  headers: {
+    'Content-Type': 'application/json',
+  },
 })
 
-// Ajout du token avant chaque requête
+// Intercepteur pour ajouter le token avant chaque requête
 api.interceptors.request.use((config) => {
-  const auth = useAuthStore()
-  const token = auth.token || localStorage.getItem('token')
-
+  const token = localStorage.getItem('token')
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
-
+  
   return config
 })
+
+// Intercepteur de réponse pour gérer les erreurs d'authentification
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token invalide ou expiré - nettoyer le localStorage
+      localStorage.removeItem('token')
+      localStorage.removeItem('username')
+      localStorage.removeItem('role')
+      
+      // Rediriger vers la page de login si on n'y est pas déjà
+      if (window.location.pathname !== '/') {
+        window.location.href = '/'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
 
 export default api

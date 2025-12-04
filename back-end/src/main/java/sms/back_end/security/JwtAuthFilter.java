@@ -1,3 +1,4 @@
+// sms.back_end.security.JwtAuthFilter
 package sms.back_end.security;
 
 import java.io.IOException;
@@ -24,6 +25,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService; // Nouveau service
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -35,6 +39,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
+            
+            // 1. Vérifier d'abord si le token est blacklisté
+            if (tokenBlacklistService.isTokenBlacklisted(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("{\"error\":\"Token has been revoked\",\"code\":\"TOKEN_REVOKED\"}");
+                return; // Arrêter le traitement
+            }
+            
+            // 2. Valider le JWT normalement
             if (jwtUtils.validateJwt(token)) {
                 username = jwtUtils.getUsernameFromJwt(token);
             }

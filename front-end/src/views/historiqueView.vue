@@ -23,6 +23,11 @@
     <div v-else class="card shadow">
       <div class="card-header d-flex justify-content-between align-items-center">
         <div class="card-title mb-0">Historique SMS</div>
+        <button 
+          class="btn btn-primary btn-sm"
+          style="width: 100px">
+          Importer
+        </button>
       </div>
 
       <div class="card-body">

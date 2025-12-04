@@ -180,3 +180,58 @@
   margin-top: 0;
 }
 
+/* ------------------ ALIGNEMENT ENTÊTE DES CARDS ------------------ */
+.card-header {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Ligne interne qui contient le titre + les boutons */
+.card-head-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Titre à gauche, boutons à droite */
+}
+
+/* Forcer le titre à rester bien aligné horizontalement */
+.card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+/* Boutons d’actions */
+.card-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* espace constant */
+}
+
+.card-tools .btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Icône dans le bouton */
+.card-tools .btn .btn-label i {
+  font-size: 14px;
+}
+
+/* ------------------ RESPONSIVE (mobile) ------------------ */
+@media (max-width: 576px) {
+  .card-head-row {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .card-tools {
+    justify-content: center;
+  }
+}
